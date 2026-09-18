@@ -15,7 +15,7 @@
 body{min-width:320px}.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid rgba(238,241,231,.12);background:#07100b}
 .brand{font-size:18px;letter-spacing:.18em;font-weight:800}.round,.score{font-size:11px;letter-spacing:.12em;color:#9ea79d}.score strong{color:#eef1e7;margin-left:8px}
 .brand,.mode-inner h1,.mode-card h2,.intro h1,.result-card h2,.end-inner h1,.submit,.primary,.name-row button,.map-toggle{font-family:"Dela Gothic One",Inter,ui-sans-serif,system-ui,sans-serif;font-weight:400}
-.hud-right{display:flex;align-items:center;gap:24px}.timer{font-size:11px;letter-spacing:.12em;color:#9ea79d}.timer strong{color:#f5c542;margin-left:8px;font-variant-numeric:tabular-nums}
+.hud-right{display:flex;align-items:center;gap:24px}
 .mode-screen{min-height:100vh;padding:56px;display:flex;align-items:center;justify-content:center}.mode-inner{width:min(1050px,100%)}.mode-inner h1{font-size:clamp(48px,8vw,96px);letter-spacing:-.06em;line-height:.9;margin:14px 0 18px}.mode-intro{max-width:680px;color:#aab3a6;line-height:1.6;margin-bottom:34px}.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mode-card{appearance:none;text-align:left;min-height:240px;padding:28px;border:1px solid rgba(238,241,231,.2);background:#0e1712;color:#eef1e7;cursor:pointer;display:flex;flex-direction:column;transition:.18s ease}.mode-card:hover,.mode-card:focus-visible{background:#18231b;border-color:#e9eddf;transform:translateY(-2px);outline:none}.mode-card h2{font-size:34px;margin:12px 0}.mode-card p{color:#aab3a6;line-height:1.55;margin:0 0 24px}.mode-meta{margin-top:auto;font-size:10px;letter-spacing:.12em;color:#f5c542;font-weight:800}.mode-card.disabled{opacity:.42;cursor:default}.mode-card.disabled:hover{transform:none;background:#0e1712;border-color:rgba(238,241,231,.2)}
 .intro{padding:28px 48px 20px;max-width:1200px}.eyebrow{font-size:10px;letter-spacing:.18em;font-weight:800;color:#9ba895}
 .intro h1{font-size:clamp(30px,4vw,58px);line-height:1.02;max-width:980px;margin:10px 0 12px;letter-spacing:-.04em}.intro p{color:#9ea79d;max-width:700px;margin:0;line-height:1.5}
@@ -359,10 +359,19 @@ const CITY_LOCATIONS=[
 
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
 const dist=(a,b)=>{const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLon=(b[1]-a[1])*Math.PI/180,lat1=a[0]*Math.PI/180,lat2=b[0]*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.sin(dLon/2)**2*Math.cos(lat1)*Math.cos(lat2);return 2*R*Math.asin(Math.sqrt(x));};
-function distanceScore(km,modeId){
-const perfectRadius=modeId==="city"?75:15;
-if(km<=perfectRadius)return 4000;
-return Math.max(0,Math.round(4000*Math.exp(-(km-perfectRadius)/1800)));
+function distanceToBoundsKm(point,bounds){
+const lat=Math.max(bounds[0][0],Math.min(bounds[1][0],point[0]));
+const lng=Math.max(bounds[0][1],Math.min(bounds[1][1],point[1]));
+return dist(point,[lat,lng]);
+}
+function scoreForGuess(point,loc,modeId){
+if(modeId==="city"){
+const missKm=distanceToBoundsKm(point,loc.bounds);
+return Math.max(0,Math.round(5000*Math.exp(-missKm/600)));
+}
+const km=dist(point,loc.coords),perfectRadius=15;
+if(km<=perfectRadius)return 5000;
+return Math.max(0,Math.round(5000*Math.exp(-(km-perfectRadius)/1800)));
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -378,9 +387,7 @@ try{localStorage.setItem("terrain-seen",JSON.stringify(seen))}catch{}
 return picks;
 }
 const MODES={city:{id:"city",name:"CITY MODE",locations:CITY_LOCATIONS},landscape:{id:"landscape",name:"LANDSCAPE MODE",locations:LOCATIONS}};
-const ROUND_SECONDS=45;
 let activeMode=null,game=[],round=0,guess=null,submitted=false,score=0,expanded=false;
-let secondsLeft=ROUND_SECONDS,timerId=null;
 let satMap=null,guessMap=null,guessMarker=null,answerMarker=null,line1=null,line2=null;
 let satBounds=null,satLocBounds=null;
 
@@ -392,7 +399,7 @@ function init(){
   renderMenu();
 }
 function renderMenu(){
-document.getElementById("app").innerHTML=`<div class="mode-screen"><div class="mode-inner"><div class="eyebrow">TERRAIN · CHOOSE AN EXPEDITION</div><h1>READ THE WORLD<br>FROM ABOVE.</h1><p class="mode-intro">Every round shows a location at a consistent scale. Choose a mode by clicking anywhere on its card. Place your guess quickly: accurate guesses earn more points when made faster.</p><div class="mode-grid"><button class="mode-card" data-mode="city"><div class="eyebrow">12 LOCATIONS</div><h2>CITY MODE</h2><p>Identify major cities by their coastlines, rivers, street patterns, mountains and urban form. Every city uses the same approximately 70 × 55 km view.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button><button class="mode-card" data-mode="landscape"><div class="eyebrow">GLOBAL COLLECTION</div><h2>LANDSCAPE MODE</h2><p>Read agriculture, water, energy, extraction and natural systems from satellite imagery.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button></div></div></div>`;
+document.getElementById("app").innerHTML=`<div class="mode-screen"><div class="mode-inner"><div class="eyebrow">TERRAIN · CHOOSE AN EXPEDITION</div><h1>READ THE WORLD<br>FROM ABOVE.</h1><p class="mode-intro">Every round shows a location at a consistent scale. Choose a mode by clicking anywhere on its card.</p><div class="mode-grid"><button class="mode-card" data-mode="city"><div class="eyebrow">12 LOCATIONS</div><h2>CITY MODE</h2><p>Identify major cities by their coastlines, rivers, street patterns, mountains and urban form. Every city uses the same approximately 70 × 55 km view. Clicking anywhere within the curated city area earns full points.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button><button class="mode-card" data-mode="landscape"><div class="eyebrow">GLOBAL COLLECTION</div><h2>LANDSCAPE MODE</h2><p>Read agriculture, water, energy, extraction and natural systems from satellite imagery.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button></div></div></div>`;
 document.querySelectorAll(".mode-card[data-mode]").forEach(card=>card.onclick=()=>startMode(card.dataset.mode));
 }
 function startMode(modeId){
@@ -407,7 +414,7 @@ function startMode(modeId){
 
 function renderShell(){
 document.getElementById("app").innerHTML=`
-<main class="app"><header class="topbar"><div class="brand">TERRAIN</div><div class="round" id="roundText"></div><div class="hud-right"><div class="timer">TIME <strong id="timerText">45</strong></div><div class="score">SCORE <strong id="scoreText">0</strong></div></div></header>
+<main class="app"><header class="topbar"><div class="brand">TERRAIN</div><div class="round" id="roundText"></div><div class="hud-right"><div class="score">SCORE <strong id="scoreText">0</strong></div></div></header>
 <section class="intro"><div class="eyebrow" id="category"></div><h1 id="clue"></h1><p>Study the landscape. Use the satellite view, then place your best guess on the world map.</p></section>
 <section class="game-stage" id="stage"><div id="satellite" class="satellite-map"></div>
 <div id="guessPanel" class="guess-panel"><div class="guess-map-header"><div><div class="eyebrow">GUESS MAP</div><div class="guess-status" id="guessStatus">PLACE YOUR GUESS</div></div><button class="map-toggle" id="toggleMap">EXPAND MAP ↗</button></div><div id="guessMap" class="guess-map"></div><div class="guess-attribution"><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></div><button class="submit map-submit disabled" id="submit" disabled>LOCK IN GUESS <span>→</span></button></div>
@@ -490,10 +497,7 @@ if(guessMap)guessMap.invalidateSize();
 
 function renderRound(){
 const loc=game[round];guess=null;submitted=false;expanded=false;
-clearInterval(timerId);secondsLeft=ROUND_SECONDS;
 document.getElementById("roundText").textContent=`${activeMode.name} · ROUND ${String(round+1).padStart(2,"0")} / 06`;
-document.getElementById("timerText").textContent=secondsLeft;
-timerId=setInterval(()=>{secondsLeft=Math.max(0,secondsLeft-1);const el=document.getElementById("timerText");if(el)el.textContent=secondsLeft;if(secondsLeft===0)clearInterval(timerId)},1000);
 document.getElementById("scoreText").textContent=score.toLocaleString();
 document.getElementById("category").textContent=loc.category;
 document.getElementById("clue").textContent=loc.clue;
@@ -532,7 +536,7 @@ document.getElementById("submit").disabled=false;document.getElementById("submit
 }
 function submitGuess(){
 if(!guess||submitted)return;
-submitted=true;clearInterval(timerId);const loc=game[round],km=dist(guess,loc.coords),basePts=distanceScore(km,activeMode.id),speedBonus=Math.round(1000*(secondsLeft/ROUND_SECONDS)),pts=basePts+speedBonus;score+=pts;
+submitted=true;const loc=game[round],km=dist(guess,loc.coords),pts=scoreForGuess(guess,loc,activeMode.id);score+=pts;
 document.getElementById("scoreText").textContent=score.toLocaleString();document.getElementById("guessStatus").textContent="RESULT";
 document.getElementById("submit").disabled=true;document.getElementById("submit").textContent="GUESS LOCKED";
 if(answerMarker)answerMarker.remove();answerMarker=L.marker(loc.coords,{icon:icon("actual","ANSWER")}).addTo(guessMap);
@@ -542,7 +546,7 @@ line2=L.polyline([guess,loc.coords],{color:"#f5c542",weight:5,opacity:1,dashArra
 const group=L.latLngBounds([guess,loc.coords]);guessMap.fitBounds(group,{padding:[90,90],maxZoom:5});
 expanded=true;document.getElementById("guessPanel").classList.add("expanded");document.getElementById("toggleMap").textContent="MINIMIZE MAP ↙";
 setTimeout(()=>guessMap.invalidateSize(),300);
-document.getElementById("result").innerHTML=`<div class="result-card"><div class="eyebrow">FIELD NOTE · ${esc(loc.category)}</div><h2>${esc(loc.name)}</h2><div class="result-stats"><div><span>DISTANCE</span><strong>${Math.round(km).toLocaleString()} km</strong></div><div><span>SPEED BONUS</span><strong>+${speedBonus.toLocaleString()}</strong></div><div><span>ROUND SCORE</span><strong>+${pts.toLocaleString()}</strong></div></div><p>${esc(loc.story)}</p><div class="hint-line"><b>What to notice:</b> ${esc(loc.hint)}</div>${round<5?'<button class="primary" id="nextBtn">NEXT ROUND →</button>':'<div class="final-note">Final round complete. Your expedition score is shown next.</div>'}</div>`;
+document.getElementById("result").innerHTML=`<div class="result-card"><div class="eyebrow">FIELD NOTE · ${esc(loc.category)}</div><h2>${esc(loc.name)}</h2><div class="result-stats"><div><span>DISTANCE TO CENTER</span><strong>${Math.round(km).toLocaleString()} km</strong></div><div><span>ROUND SCORE</span><strong>+${pts.toLocaleString()}</strong></div></div><p>${esc(loc.story)}</p><div class="hint-line"><b>What to notice:</b> ${esc(loc.hint)}</div>${round<5?'<button class="primary" id="nextBtn">NEXT ROUND →</button>':'<div class="final-note">Final round complete. Your expedition score is shown next.</div>'}</div>`;
 if(round<5)document.getElementById("nextBtn").onclick=nextRound;else setTimeout(showFinal,900);
 }
 function nextRound(){round++;renderRound();}
@@ -551,12 +555,12 @@ const total=score,list=safeLeaderboard();
 if(window.goatcounter&&window.goatcounter.count){
 window.goatcounter.count({path:"game-completed",title:"Game completed",event:true});
 }
-document.getElementById("app").innerHTML=`<div class="end-screen"><div class="end-inner"><div class="eyebrow">${activeMode.name} COMPLETE</div><h1>${total.toLocaleString()} <span>/ 30,000</span></h1><p>Six rounds. Accuracy and speed both shaped your score.</p><div class="name-row"><input id="nameInput" maxlength="18" placeholder="ENTER YOUR NAME"><button id="saveBtn">SAVE SCORE</button></div><div class="leaderboard"><div class="eyebrow">LOCAL LEADERBOARD</div><div id="rows"></div></div><button class="primary" id="againBtn">PLAY AGAIN →</button> <button class="primary" id="menuBtn">CHOOSE MODE</button></div></div>`;
+document.getElementById("app").innerHTML=`<div class="end-screen"><div class="end-inner"><div class="eyebrow">${activeMode.name} COMPLETE</div><h1>${total.toLocaleString()} <span>/ 30,000</span></h1><p>Six rounds. One score. You read the terrain.</p><div class="name-row"><input id="nameInput" maxlength="18" placeholder="ENTER YOUR NAME"><button id="saveBtn">SAVE SCORE</button></div><div class="leaderboard"><div class="eyebrow">LOCAL LEADERBOARD</div><div id="rows"></div></div><button class="primary" id="againBtn">PLAY AGAIN →</button> <button class="primary" id="menuBtn">CHOOSE MODE</button></div></div>`;
 const drawRows=arr=>document.getElementById("rows").innerHTML=arr.slice(0,10).map((e,i)=>`<div class="leader-row"><span>${String(i+1).padStart(2,"0")} ${esc(e.name)}</span><strong>${Number(e.score).toLocaleString()}</strong></div>`).join("");
 drawRows(list);
 document.getElementById("saveBtn").onclick=()=>{const updated=saveLeaderboard(document.getElementById("nameInput").value,total);drawRows(updated)};
 document.getElementById("againBtn").onclick=()=>startMode(activeMode.id);
-document.getElementById("menuBtn").onclick=()=>{clearInterval(timerId);activeMode=null;renderMenu()};
+document.getElementById("menuBtn").onclick=()=>{activeMode=null;renderMenu()};
 }
 init();
 </script>
