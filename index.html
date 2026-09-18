@@ -4,109 +4,51 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TERRAIN — Read the Landscape</title>
-
 <script data-goatcounter="https://studiojinz.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
-
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eef1e7;background:#07100b}
-*{box-sizing:border-box}
-html,body,#app{margin:0;width:100%;min-height:100%;background:#07100b}
-body{min-width:320px}
-.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid rgba(238,241,231,.12);background:#07100b}
-.brand{font-size:18px;letter-spacing:.18em;font-weight:800}
-.round,.score{font-size:11px;letter-spacing:.12em;color:#9ea79d}
-.score strong{color:#eef1e7;margin-left:8px}
-.intro{padding:28px 48px 20px;max-width:1200px}
-.eyebrow{font-size:10px;letter-spacing:.18em;font-weight:800;color:#9ba895}
-.intro h1{font-size:clamp(30px,4vw,58px);line-height:1.02;max-width:980px;margin:10px 0 12px;letter-spacing:-.04em}
-.intro p{color:#9ea79d;max-width:700px;margin:0;line-height:1.5}
+*{box-sizing:border-box}html,body,#app{margin:0;width:100%;min-height:100%;background:#07100b}
+body{min-width:320px}.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid rgba(238,241,231,.12);background:#07100b}
+.brand{font-size:18px;letter-spacing:.18em;font-weight:800}.round,.score{font-size:11px;letter-spacing:.12em;color:#9ea79d}.score strong{color:#eef1e7;margin-left:8px}
+.hud-right{display:flex;align-items:center;gap:24px}.timer{font-size:11px;letter-spacing:.12em;color:#9ea79d}.timer strong{color:#f5c542;margin-left:8px;font-variant-numeric:tabular-nums}
+.mode-screen{min-height:100vh;padding:56px;display:flex;align-items:center;justify-content:center}.mode-inner{width:min(1050px,100%)}.mode-inner h1{font-size:clamp(48px,8vw,96px);letter-spacing:-.06em;line-height:.9;margin:14px 0 18px}.mode-intro{max-width:680px;color:#aab3a6;line-height:1.6;margin-bottom:34px}.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mode-card{appearance:none;text-align:left;min-height:240px;padding:28px;border:1px solid rgba(238,241,231,.2);background:#0e1712;color:#eef1e7;cursor:pointer;display:flex;flex-direction:column;transition:.18s ease}.mode-card:hover,.mode-card:focus-visible{background:#18231b;border-color:#e9eddf;transform:translateY(-2px);outline:none}.mode-card h2{font-size:34px;margin:12px 0}.mode-card p{color:#aab3a6;line-height:1.55;margin:0 0 24px}.mode-meta{margin-top:auto;font-size:10px;letter-spacing:.12em;color:#f5c542;font-weight:800}.mode-card.disabled{opacity:.42;cursor:default}.mode-card.disabled:hover{transform:none;background:#0e1712;border-color:rgba(238,241,231,.2)}
+.intro{padding:28px 48px 20px;max-width:1200px}.eyebrow{font-size:10px;letter-spacing:.18em;font-weight:800;color:#9ba895}
+.intro h1{font-size:clamp(30px,4vw,58px);line-height:1.02;max-width:980px;margin:10px 0 12px;letter-spacing:-.04em}.intro p{color:#9ea79d;max-width:700px;margin:0;line-height:1.5}
 .game-stage{position:relative;margin:0 48px 40px;height:calc(100vh - 190px);min-height:620px;border:1px solid rgba(238,241,231,.16);overflow:hidden;background:#0b140e}
-.satellite-map{position:absolute;inset:0}
-.satellite-map .leaflet-control-zoom{left:16px;top:16px;margin:0}
-.leaflet-control-zoom a{width:42px!important;height:42px!important;line-height:42px!important;font-size:24px!important;color:#111!important;background:#f3f4ee!important}
-.leaflet-control-zoom a.leaflet-disabled{opacity:.28!important;cursor:not-allowed!important}
+.satellite-map{position:absolute;inset:0}.satellite-map .leaflet-control-zoom{left:16px;top:16px;margin:0}
+.leaflet-control-zoom a{width:42px!important;height:42px!important;line-height:42px!important;font-size:24px!important;color:#111!important;background:#f3f4ee!important}.leaflet-control-zoom a.leaflet-disabled{opacity:.28!important;cursor:not-allowed!important}
 .leaflet-control-attribution{font-size:9px!important}
 .guess-panel{position:absolute;z-index:1000;right:18px;bottom:18px;width:350px;height:235px;background:#f3f4ee;border:2px solid #0b120d;box-shadow:0 12px 40px rgba(0,0,0,.38);transition:all .25s ease;overflow:hidden;color:#172019}
 .guess-panel.expanded{width:min(760px,calc(100% - 36px));height:min(620px,calc(100% - 36px))}
 .guess-map-header{height:54px;display:flex;justify-content:space-between;align-items:center;padding:8px 10px 8px 14px;background:#edf0e7;border-bottom:1px solid #bbc1b8;position:relative;z-index:1001}
-.guess-status{font-size:11px;letter-spacing:.08em;font-weight:800;margin-top:2px}
-.map-toggle{border:1px solid #2c352e;background:#152019;color:#eef1e7;padding:10px 12px;font-size:10px;letter-spacing:.1em;font-weight:800;cursor:pointer}
+.guess-status{font-size:11px;letter-spacing:.08em;font-weight:800;margin-top:2px}.map-toggle{border:1px solid #2c352e;background:#152019;color:#eef1e7;padding:10px 12px;font-size:10px;letter-spacing:.1em;font-weight:800;cursor:pointer}
 .guess-map{height:calc(100% - 54px);width:100%}
-.guess-attribution{position:absolute;z-index:1003;right:4px;bottom:2px;padding:1px 3px;background:rgba(255,255,255,.82);font-size:8px;line-height:1;color:#3d453f}
-.guess-attribution a{color:#3d453f;text-decoration:none}
+.guess-attribution{position:absolute;z-index:1003;right:4px;bottom:2px;padding:1px 3px;background:rgba(255,255,255,.82);font-size:8px;line-height:1;color:#3d453f}.guess-attribution a{color:#3d453f;text-decoration:none}
 .map-submit{position:absolute;z-index:1002;left:16px;right:16px;bottom:16px;width:calc(100% - 32px);height:50px;min-width:0;border:2px solid #11180f;box-shadow:0 5px 18px rgba(0,0,0,.35);background:#e9eddf}
-.bottom-left{position:absolute;z-index:900;left:18px;bottom:18px;display:flex;gap:8px;align-items:stretch}
-.tip{height:52px;padding:0 15px;display:flex;align-items:center;gap:13px;background:rgba(7,16,11,.92);border:1px solid rgba(238,241,231,.2);font-size:10px;letter-spacing:.09em}
-.tip span{color:#a8b29f}
-.tip b{font-weight:700}
-.submit,.primary{border:0;background:#e9eddf;color:#11180f;padding:0 24px;font-weight:900;letter-spacing:.07em;cursor:pointer}
-.submit{height:52px;min-width:205px;font-size:13px}
-.submit span{margin-left:22px;font-size:20px}
-.submit.disabled{opacity:.38;cursor:not-allowed}
+.bottom-left{position:absolute;z-index:900;left:18px;bottom:18px;display:flex;gap:8px;align-items:stretch}.tip{height:52px;padding:0 15px;display:flex;align-items:center;gap:13px;background:rgba(7,16,11,.92);border:1px solid rgba(238,241,231,.2);font-size:10px;letter-spacing:.09em}.tip span{color:#a8b29f}.tip b{font-weight:700}
+.submit,.primary{border:0;background:#e9eddf;color:#11180f;padding:0 24px;font-weight:900;letter-spacing:.07em;cursor:pointer}.submit{height:52px;min-width:205px;font-size:13px}.submit span{margin-left:22px;font-size:20px}.submit.disabled{opacity:.38;cursor:not-allowed}
 .map-submit.submit.disabled{opacity:.48}
 .result-card{position:absolute;z-index:1100;left:18px;top:18px;width:min(430px,calc(100% - 36px));background:rgba(7,16,11,.95);border:1px solid rgba(238,241,231,.2);padding:24px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
-.result-card h2{font-size:27px;line-height:1.05;margin:7px 0 18px}
-.result-card p{color:#c4cbc1;line-height:1.55;font-size:13px}
-.result-stats{display:flex;gap:30px;border-top:1px solid rgba(238,241,231,.14);border-bottom:1px solid rgba(238,241,231,.14);padding:13px 0;margin-bottom:15px}
-.result-stats div{display:flex;flex-direction:column;gap:4px}
-.result-stats span{font-size:9px;letter-spacing:.14em;color:#8f998e}
-.result-stats strong{font-size:16px}
-.hint-line{font-size:12px;line-height:1.45;color:#aeb7aa;margin:14px 0 20px}
-.primary{height:48px;padding:0 18px}
-.answer-marker{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.6);font-size:8px;font-weight:900;color:#111}
-.answer-marker.guess{background:#f5c542}
-.answer-marker.actual{background:#e64c45}
-.end-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px}
-.end-inner{width:min(760px,100%)}
-.end-inner h1{font-size:clamp(60px,12vw,130px);line-height:.9;letter-spacing:-.07em;margin:16px 0}
-.end-inner h1 span{font-size:.35em;color:#788177;letter-spacing:-.03em}
-.end-inner>p{color:#aab3a6}
-.name-row{display:flex;margin:28px 0;gap:8px}
-.name-row input{flex:1;height:52px;background:#101a13;border:1px solid #354038;color:#eef1e7;padding:0 14px;outline:none}
-.name-row button{height:52px;border:0;background:#e9eddf;color:#11180f;font-weight:900;padding:0 18px;cursor:pointer}
-.leaderboard{border-top:1px solid rgba(238,241,231,.18);margin-top:25px;padding-top:18px}
-.leader-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(238,241,231,.09);font-size:13px}
-.leader-row strong{font-variant-numeric:tabular-nums}
-.end-inner>.primary{margin-top:22px;width:190px}
-
-@media(max-width:900px){
-  .intro{padding:26px 20px 18px}
-  .game-stage{margin:0 20px 24px;height:calc(100vh - 205px);min-height:620px}
-  .guess-panel{width:290px;height:205px;right:12px;bottom:12px}
-  .bottom-left{left:12px;bottom:12px;right:12px}
-  .tip{display:none}
-  .map-submit{left:10px;right:10px;bottom:10px;width:calc(100% - 20px)}
-}
-
-@media(max-width:650px){
-  .topbar{padding:0 15px}
-  .round{display:none}
-  .intro h1{font-size:32px}
-  .game-stage{margin:0 12px 20px;height:calc(100vh - 220px);min-height:570px}
-  .guess-panel{width:230px;height:180px}
-  .guess-panel.expanded{width:calc(100% - 24px);height:calc(100% - 24px)}
-  .guess-map-header{height:48px}
-  .guess-map{height:calc(100% - 48px)}
-  .result-card{padding:18px}
-}
+.result-card h2{font-size:27px;line-height:1.05;margin:7px 0 18px}.result-card p{color:#c4cbc1;line-height:1.55;font-size:13px}.result-stats{display:flex;gap:30px;border-top:1px solid rgba(238,241,231,.14);border-bottom:1px solid rgba(238,241,231,.14);padding:13px 0;margin-bottom:15px}.result-stats div{display:flex;flex-direction:column;gap:4px}.result-stats span{font-size:9px;letter-spacing:.14em;color:#8f998e}.result-stats strong{font-size:16px}.hint-line{font-size:12px;line-height:1.45;color:#aeb7aa;margin:14px 0 20px}.primary{height:48px;padding:0 18px}
+.answer-marker{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.6);font-size:8px;font-weight:900;color:#111}.answer-marker.guess{background:#f5c542}.answer-marker.actual{background:#e64c45}
+.end-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px}.end-inner{width:min(760px,100%)}.end-inner h1{font-size:clamp(60px,12vw,130px);line-height:.9;letter-spacing:-.07em;margin:16px 0}.end-inner h1 span{font-size:.35em;color:#788177;letter-spacing:-.03em}.end-inner>p{color:#aab3a6}
+.name-row{display:flex;margin:28px 0;gap:8px}.name-row input{flex:1;height:52px;background:#101a13;border:1px solid #354038;color:#eef1e7;padding:0 14px;outline:none}.name-row button{height:52px;border:0;background:#e9eddf;color:#11180f;font-weight:900;padding:0 18px;cursor:pointer}
+.leaderboard{border-top:1px solid rgba(238,241,231,.18);margin-top:25px;padding-top:18px}.leader-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(238,241,231,.09);font-size:13px}.leader-row strong{font-variant-numeric:tabular-nums}.end-inner>.primary{margin-top:22px;width:190px}
+@media(max-width:900px){.intro{padding:26px 20px 18px}.game-stage{margin:0 20px 24px;height:calc(100vh - 205px);min-height:620px}.guess-panel{width:290px;height:205px;right:12px;bottom:12px}.bottom-left{left:12px;bottom:12px;right:12px}.tip{display:none}.map-submit{left:10px;right:10px;bottom:10px;width:calc(100% - 20px)}}
+@media(max-width:650px){.topbar{padding:0 15px}.round{display:none}.hud-right{gap:10px}.intro h1{font-size:32px}.game-stage{margin:0 12px 20px;height:calc(100vh - 220px);min-height:570px}.guess-panel{width:230px;height:180px}.guess-panel.expanded{width:calc(100% - 24px);height:calc(100% - 24px)}.guess-map-header{height:48px}.guess-map{height:calc(100% - 48px)}.result-card{padding:18px}.mode-screen{padding:28px 18px}.mode-grid{grid-template-columns:1fr}.mode-card{min-height:190px}}
 </style>
 </head>
-
-<body>
-<div id="app"></div>
-
+<body><div id="app"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
-
 <script>
 const LOCATIONS=[
 {id:"almeria",name:"Campo de Dalías, Spain",region:"Andalusia, Spain",category:"FOOD",coords:[36.78,-2.73],bounds:[[36.70,-2.88],[36.86,-2.58]],clue:"Look for a landscape where food production has become visible from space.",story:"A huge share of this coastal plain is covered by greenhouse agriculture. The bright geometric roofs create a distinctive landscape that can be recognized from orbit.",hint:"Look for repeated pale rectangles packed tightly across a dry coastal plain."},
-{id:"ivanpah",name:"Ivanpah Solar Complex, USA",region:"California–Nevada border, USA",category:"ENERGY",coords:[35.56,-115.47],bounds:[[35.45,-115.63],[35.68,-115.30]],clue:"Find infrastructure built to turn a desert into an energy landscape.",story:"Large-scale solar infrastructure can form enormous geometric patterns in otherwise open desert. The repeating field is the clue.",hint:"Look for a highly regular engineered pattern against a nearly empty desert."},
+{"id":"ivanpah","name":"Ivanpah Solar Complex, USA","region":"California–Nevada border, USA","category":"HUMAN SYSTEMS","coords":[35.594785665487265,-115.39215087890626],"bounds":[[35.48249676861339,-115.55785961321874],[35.70707456236114,-115.22644214459379]],"clue":"Find a desert landscape transformed into a large-scale energy system.","story":"Ivanpah uses thousands of sun-tracking mirrors to concentrate sunlight onto three central towers. The heat produces steam that drives turbines, generating up to 392 megawatts of electricity.","hint":"Look for enormous circular fields of mirrors arranged around several central towers."},
 {id:"kinderdijk",name:"Dutch Polder Landscape",region:"South Holland, Netherlands",category:"WATER",coords:[51.88,4.64],bounds:[[51.80,4.52],[51.95,4.78]],clue:"Find a landscape shaped by humans keeping water out.",story:"The low-lying Netherlands contains a dense network of canals, dikes and managed fields. From above, straight water channels and organized parcels are the signature.",hint:"Look for a grid of water, fields and narrow roads in very flat terrain."},
 {id:"jiangsu",name:"Jiangsu Aquaculture Landscape, China",region:"Jiangsu, China",category:"FOOD",coords:[31.28,120.70],bounds:[[31.16,120.55],[31.39,120.88]],clue:"Look for a landscape where water is part of the food system.",story:"Lowland parts of eastern China contain dense mosaics of ponds, canals and agricultural plots. Repeating water-filled rectangles reveal aquaculture and water-managed farming.",hint:"Look for many small repeating blue or dark rectangles connected by canals."},
 {id:"salar",name:"Salar de Atacama, Chile",region:"Antofagasta, Chile",category:"MINERALS",coords:[-23.48,-68.33],bounds:[[-23.60,-68.50],[-23.35,-68.15]],clue:"Find a place where a vast salt landscape meets industrial extraction.",story:"The Salar de Atacama is a major salt-flat landscape with industrial brine operations. Its stark geometry and extreme aridity make the site legible from above.",hint:"Look for huge pale salt surfaces interrupted by sharply geometric evaporation areas."},
@@ -134,105 +76,323 @@ const LOCATIONS=[
 {id:"amazon-frontier",name:"Amazon Deforestation Frontier, Brazil",region:"Rondônia, Brazil",category:"LAND USE",coords:[-9.97,-63.0],bounds:[[-10.20,-63.35],[-9.75,-62.65]],clue:"Find a landscape where a forest is being replaced in a distinctive branching pattern.",story:"Deforestation along the Amazon's agricultural frontier often spreads outward from roads in a herringbone pattern, leaving a fishbone shape of cleared land.",hint:"Look for a fishbone or herringbone pattern of cleared land branching off straight roads."}
 ];
 
+const CITY_LOCATIONS=[
+  {
+    "id": "tokyo",
+    "name": "Tokyo",
+    "region": "Japan",
+    "category": "CITY",
+    "coords": [
+      35.67291625588,
+      139.76016998291018
+    ],
+    "bounds": [
+      [
+        35.425880682757466,
+        139.37313813580965
+      ],
+      [
+        35.91995182900253,
+        140.14720183001072
+      ]
+    ],
+    "clue": "Find a vast coastal megacity built around a complex bay.",
+    "story": "Tokyo forms the center of the world’s largest metropolitan area. Dense development surrounds Tokyo Bay, where artificial islands, ports, airports and reclaimed land extend the city into the water.",
+    "hint": "Look for an enormous urban area surrounding a bay filled with artificial islands and port infrastructure."
+  },
+  {
+    "id": "seoul",
+    "name": "Seoul",
+    "region": "South Korea",
+    "category": "CITY",
+    "coords": [
+      37.53804390907164,
+      126.98375701904298
+    ],
+    "bounds": [
+      [
+        37.29100833594911,
+        126.58725115313084
+      ],
+      [
+        37.78507948219417,
+        127.38026288495513
+      ]
+    ],
+    "clue": "Find a dense capital divided by a broad river and enclosed by mountains.",
+    "story": "Seoul developed along the Han River, which cuts through the center of the city. Dense neighborhoods fill the flatter land while forested mountains interrupt the urban area.",
+    "hint": "Look for a wide river crossing a dense city with green mountains rising between developed areas."
+  },
+  {
+    "id": "new-york-city",
+    "name": "New York City",
+    "region": "New York, USA",
+    "category": "CITY",
+    "coords": [
+      40.75766014997032,
+      -73.97987365722658
+    ],
+    "bounds": [
+      [
+        40.51062457684779,
+        -74.39494714168629
+      ],
+      [
+        41.00469572309285,
+        -73.56480017276687
+      ]
+    ],
+    "clue": "Find a coastal city spread across islands, rivers and one highly organized urban core.",
+    "story": "New York City occupies several islands and a mainland section where the Hudson and East Rivers meet the Atlantic. Manhattan’s street grid and the large rectangle of Central Park are especially visible from above.",
+    "hint": "Look for a long narrow island with a dense grid, a large rectangular park and bridges connecting surrounding boroughs."
+  },
+  {
+    "id": "los-angeles",
+    "name": "Los Angeles",
+    "region": "California, USA",
+    "category": "CITY",
+    "coords": [
+      34.03445260967645,
+      -118.21151733398438
+    ],
+    "bounds": [
+      [
+        33.78741703655392,
+        -118.5909169550641
+      ],
+      [
+        34.28148818279898,
+        -117.83211771290465
+      ]
+    ],
+    "clue": "Find a sprawling coastal metropolis constrained by mountains and crossed by an enormous road network.",
+    "story": "Los Angeles spreads across a broad basin between the Pacific Ocean and surrounding mountain ranges. Its low-density development and extensive freeway system produce a vast continuous urban pattern.",
+    "hint": "Look for a huge street grid and freeway network filling a basin between mountains and the coast."
+  },
+  {
+    "id": "san-francisco",
+    "name": "San Francisco",
+    "region": "California, USA",
+    "category": "CITY",
+    "coords": [
+      37.75008654795525,
+      -122.37396240234376
+    ],
+    "bounds": [
+      [
+        37.50305097483272,
+        -122.77160174073614
+      ],
+      [
+        37.99712212107778,
+        -121.97632306395138
+      ]
+    ],
+    "clue": "Find a compact city occupying the tip of a peninsula beside a large natural harbor.",
+    "story": "San Francisco sits on a narrow peninsula between the Pacific Ocean and San Francisco Bay. Bridges connect it with surrounding cities, while steep hills and protected water limit its outward growth.",
+    "hint": "Look for a dense peninsula, a large bay, multiple bridges and extensive development along the opposite shores."
+  },
+  {
+    "id": "paris",
+    "name": "Paris",
+    "region": "France",
+    "category": "CITY",
+    "coords": [
+      48.85703523304221,
+      2.3472976684570317
+    ],
+    "bounds": [
+      [
+        48.60999965991968,
+        1.8694291027757628
+      ],
+      [
+        49.10407080616474,
+        2.8251662341383006
+      ]
+    ],
+    "clue": "Find a historic European capital organized around a winding river and radiating avenues.",
+    "story": "Paris spans both banks of the Seine River. Its central districts contain dense blocks, formal parks and broad avenues, including twelve major roads that radiate from the Arc de Triomphe.",
+    "hint": "Look for a winding river, dense pale city blocks and star-shaped road patterns."
+  },
+  {
+    "id": "london",
+    "name": "London",
+    "region": "UK",
+    "category": "CITY",
+    "coords": [
+      51.50639189133812,
+      -0.12393951416015626
+    ],
+    "bounds": [
+      [
+        51.25935631821559,
+        -0.6290730429133436
+      ],
+      [
+        51.75342746446065,
+        0.38119401459303115
+      ]
+    ],
+    "clue": "Find a major city shaped by a winding tidal river.",
+    "story": "London grew around the River Thames, which bends repeatedly through the metropolitan area. Docks, bridges, reservoirs, parks and dense development reveal how the city expanded along the river.",
+    "hint": "Look for a broad winding river passing through a dense city, with docks and reservoirs toward the east."
+  },
+  {
+    "id": "dubai",
+    "name": "Dubai",
+    "region": "UAE",
+    "category": "CITY",
+    "coords": [
+      25.06569718553588,
+      55.19256591796875
+    ],
+    "bounds": [
+      [
+        24.818661612413347,
+        54.84546825228745
+      ],
+      [
+        25.31273275865841,
+        55.53966358365005
+      ]
+    ],
+    "clue": "Find a desert city that has extended its geometry far into the sea.",
+    "story": "Dubai expanded rapidly along the Persian Gulf and reshaped its coastline through extensive land reclamation. Its artificial islands, ports, highways and irrigated green spaces contrast sharply with the surrounding desert.",
+    "hint": "Look for palm-shaped islands, geometric coastal development and a narrow city bordered by open desert."
+  },
+  {
+    "id": "singapore",
+    "name": "Singapore",
+    "region": "Singapore",
+    "category": "CITY",
+    "coords": [
+      1.3635492491975707,
+      103.80157470703126
+    ],
+    "bounds": [
+      [
+        1.1165136760750412,
+        103.48707673967012
+      ],
+      [
+        1.6105848223201003,
+        104.11607267439241
+      ]
+    ],
+    "clue": "Find a dense island city positioned beside one of the world’s busiest shipping routes.",
+    "story": "Singapore is a densely developed island city-state at the southern end of the Malay Peninsula. Directly north, across the narrow Johor Strait, lies Malaysia. Ports, reclaimed coastline, reservoirs and protected vegetation are all visible from above.",
+    "hint": "Look for a highly developed island separated from Malaysia by a narrow strait, with major ports along its southern coast."
+  },
+  {
+    "id": "mexico-city",
+    "name": "Mexico City",
+    "region": "Mexico",
+    "category": "CITY",
+    "coords": [
+      19.391477141932167,
+      -99.10491943359376
+    ],
+    "bounds": [
+      [
+        19.144441568809636,
+        -99.43823675055721
+      ],
+      [
+        19.6385127150547,
+        -98.77160211663032
+      ]
+    ],
+    "clue": "Find an enormous inland city filling a high basin surrounded by volcanic mountains.",
+    "story": "Mexico City was built within a closed mountain basin that once contained a system of lakes. Its vast urban grid now covers much of the basin floor, with mountains and remaining wetlands defining its edges.",
+    "hint": "Look for an immense inland city filling a flat basin with mountains on nearly every side."
+  },
+  {
+    "id": "cairo",
+    "name": "Cairo",
+    "region": "Egypt",
+    "category": "CITY",
+    "coords": [
+      30.05423689944282,
+      31.254386901855472
+    ],
+    "bounds": [
+      [
+        29.80720132632029,
+        30.891140075863515
+      ],
+      [
+        30.30127247256535,
+        31.61763372784743
+      ]
+    ],
+    "clue": "Find a huge city where dense development follows a river through otherwise barren desert.",
+    "story": "Cairo sits along the Nile at the point where the river valley begins opening into its delta. Dense urban development and irrigated farmland create a sharp boundary against the surrounding desert.",
+    "hint": "Look for a narrow green river corridor and dense city abruptly meeting pale desert."
+  },
+  {
+    "id": "rio-de-janeiro",
+    "name": "Rio de Janeiro",
+    "region": "Brazil",
+    "category": "CITY",
+    "coords": [
+      -22.916658041825645,
+      -43.39324951171876
+    ],
+    "bounds": [
+      [
+        -23.163693614948176,
+        -43.73460049350227
+      ],
+      [
+        -22.669622468703114,
+        -43.051898529935244
+      ]
+    ],
+    "clue": "Find a coastal city divided into separate districts by steep forested mountains.",
+    "story": "Rio de Janeiro occupies a dramatic landscape of bays, beaches, lagoons and granite mountains. Urban areas fill the limited flat land while steep forested peaks divide the city into recognizable sections.",
+    "hint": "Look for dense neighborhoods squeezed between rounded mountains, beaches, lagoons and a large bay."
+  }
+];
+
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
-
-const dist=(a,b)=>{
-  const R=6371;
-  const dLat=(b[0]-a[0])*Math.PI/180;
-  const dLon=(b[1]-a[1])*Math.PI/180;
-  const lat1=a[0]*Math.PI/180;
-  const lat2=b[0]*Math.PI/180;
-  const x=Math.sin(dLat/2)**2+
-    Math.sin(dLon/2)**2*Math.cos(lat1)*Math.cos(lat2);
-  return 2*R*Math.asin(Math.sqrt(x));
-};
-
+const dist=(a,b)=>{const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLon=(b[1]-a[1])*Math.PI/180,lat1=a[0]*Math.PI/180,lat2=b[0]*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.sin(dLon/2)**2*Math.cos(lat1)*Math.cos(lat2);return 2*R*Math.asin(Math.sqrt(x));};
 const scoreFor=km=>Math.max(0,Math.round(5000*Math.exp(-km/1800)));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;"
-}[c]));
-
-function pickGame(){
-  let seen=[];
-
-  try{
-    seen=JSON.parse(localStorage.getItem("terrain-seen")||"[]");
-  }catch{
-    seen=[];
-  }
-
-  let pool=LOCATIONS.filter(l=>!seen.includes(l.id));
-
-  if(pool.length<6){
-    seen=[];
-    pool=LOCATIONS.slice();
-  }
-
-  const picks=shuffle(pool).slice(0,6);
-  seen=seen.concat(picks.map(l=>l.id));
-
-  try{
-    localStorage.setItem("terrain-seen",JSON.stringify(seen));
-  }catch{}
-
-  return picks;
+function pickGame(pool,modeId){
+let seen=[];try{seen=JSON.parse(localStorage.getItem("terrain-seen")||"[]")}catch{seen=[]}
+seen=seen.filter(id=>id.startsWith(modeId+":"));
+let available=pool.filter(l=>!seen.includes(modeId+":"+l.id));
+if(available.length<6){seen=[];available=pool.slice()}
+const picks=shuffle(available).slice(0,6);
+seen=seen.concat(picks.map(l=>l.id));
+seen=seen.map(id=>id.startsWith(modeId+":")?id:modeId+":"+id);
+try{localStorage.setItem("terrain-seen",JSON.stringify(seen))}catch{}
+return picks;
 }
+const MODES={city:{id:"city",name:"CITY MODE",locations:CITY_LOCATIONS},landscape:{id:"landscape",name:"LANDSCAPE MODE",locations:LOCATIONS}};
+const ROUND_SECONDS=45;
+let activeMode=null,game=[],round=0,guess=null,submitted=false,score=0,expanded=false;
+let secondsLeft=ROUND_SECONDS,timerId=null;
+let satMap=null,guessMap=null,guessMarker=null,answerMarker=null,line1=null,line2=null;
+let satBounds=null,satLocBounds=null;
 
-let game=pickGame();
-let round=0;
-let guess=null;
-let submitted=false;
-let score=0;
-let expanded=false;
-
-let satMap=null;
-let guessMap=null;
-let guessMarker=null;
-let answerMarker=null;
-let line1=null;
-let line2=null;
-let satBounds=null;
-let satLocBounds=null;
-
-function icon(cls,label){
-  return L.divIcon({
-    className:"",
-    html:'<div class="answer-marker '+cls+'">'+label+"</div>",
-    iconSize:[40,40],
-    iconAnchor:[20,20]
-  });
-}
-
-function safeLeaderboard(){
-  try{
-    return JSON.parse(localStorage.getItem("terrain-leaderboard")||"[]");
-  }catch{
-    return [];
-  }
-}
-
-function saveLeaderboard(name,total){
-  const list=safeLeaderboard();
-
-  list.push({
-    name:name.trim()||"ANONYMOUS",
-    score:total,
-    date:Date.now()
-  });
-
-  list.sort((a,b)=>b.score-a.score);
-
-  const top=list.slice(0,20);
-  localStorage.setItem("terrain-leaderboard",JSON.stringify(top));
-
-  return top;
-}
+function icon(cls,label){return L.divIcon({className:"",html:'<div class="answer-marker '+cls+'">'+label+"</div>",iconSize:[40,40],iconAnchor:[20,20]});}
+function safeLeaderboard(){try{return JSON.parse(localStorage.getItem("terrain-leaderboard")||"[]")}catch{return[]}}
+function saveLeaderboard(name,total){const list=safeLeaderboard();list.push({name:name.trim()||"ANONYMOUS",score:total,date:Date.now()});list.sort((a,b)=>b.score-a.score);const top=list.slice(0,20);localStorage.setItem("terrain-leaderboard",JSON.stringify(top));return top;}
 
 function init(){
+  renderMenu();
+}
+function renderMenu(){
+document.getElementById("app").innerHTML=`<div class="mode-screen"><div class="mode-inner"><div class="eyebrow">TERRAIN · CHOOSE AN EXPEDITION</div><h1>READ THE WORLD<br>FROM ABOVE.</h1><p class="mode-intro">Every round shows a location at a consistent scale. Choose a mode by clicking anywhere on its card. Place your guess quickly: accurate guesses earn more points when made faster.</p><div class="mode-grid"><button class="mode-card" data-mode="city"><div class="eyebrow">12 LOCATIONS</div><h2>CITY MODE</h2><p>Identify major cities by their coastlines, rivers, street patterns, mountains and urban form. Every city uses the same approximately 70 × 55 km view.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button><button class="mode-card" data-mode="landscape"><div class="eyebrow">GLOBAL COLLECTION</div><h2>LANDSCAPE MODE</h2><p>Read agriculture, water, energy, extraction and natural systems from satellite imagery.</p><div class="mode-meta">CLICK ANYWHERE TO START →</div></button></div></div></div>`;
+document.querySelectorAll(".mode-card[data-mode]").forEach(card=>card.onclick=()=>startMode(card.dataset.mode));
+}
+function startMode(modeId){
+  activeMode=MODES[modeId];
+  game=pickGame(activeMode.locations,activeMode.id);
+  round=0;score=0;guess=null;submitted=false;satMap=null;guessMap=null;
   renderShell();
   setupSatellite();
   setupGuessMap();
@@ -240,544 +400,158 @@ function init(){
 }
 
 function renderShell(){
-  document.getElementById("app").innerHTML=`
-    <main class="app">
-      <header class="topbar">
-        <div class="brand">TERRAIN</div>
-        <div class="round" id="roundText"></div>
-        <div class="score">SCORE <strong id="scoreText">0</strong></div>
-      </header>
-
-      <section class="intro">
-        <div class="eyebrow" id="category"></div>
-        <h1 id="clue"></h1>
-        <p>Study the landscape. Use the satellite view, then place your best guess on the world map.</p>
-      </section>
-
-      <section class="game-stage" id="stage">
-        <div id="satellite" class="satellite-map"></div>
-
-        <div id="guessPanel" class="guess-panel">
-          <div class="guess-map-header">
-            <div>
-              <div class="eyebrow">GUESS MAP</div>
-              <div class="guess-status" id="guessStatus">PLACE YOUR GUESS</div>
-            </div>
-
-            <button class="map-toggle" id="toggleMap">EXPAND MAP ↗</button>
-          </div>
-
-          <div id="guessMap" class="guess-map"></div>
-
-          <div class="guess-attribution">
-            <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>
-            · ©
-            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
-          </div>
-
-          <button class="submit map-submit disabled" id="submit" disabled>
-            LOCK IN GUESS <span>→</span>
-          </button>
-        </div>
-
-        <div class="bottom-left">
-          <div class="tip"><span>01</span><b>STUDY THE LANDSCAPE</b></div>
-          <div class="tip"><span>02</span><b>DROP YOUR PIN ON THE GUESS MAP</b></div>
-        </div>
-
-        <div id="result"></div>
-      </section>
-    </main>
-  `;
-
-  document.getElementById("toggleMap").onclick=()=>{
-    expanded=!expanded;
-
-    document
-      .getElementById("guessPanel")
-      .classList.toggle("expanded",expanded);
-
-    document.getElementById("toggleMap").textContent=
-      expanded ? "MINIMIZE MAP ↙" : "EXPAND MAP ↗";
-
-    setTimeout(()=>guessMap.invalidateSize(),280);
-  };
-
-  document.getElementById("submit").onclick=submitGuess;
+document.getElementById("app").innerHTML=`
+<main class="app"><header class="topbar"><div class="brand">TERRAIN</div><div class="round" id="roundText"></div><div class="hud-right"><div class="timer">TIME <strong id="timerText">45</strong></div><div class="score">SCORE <strong id="scoreText">0</strong></div></div></header>
+<section class="intro"><div class="eyebrow" id="category"></div><h1 id="clue"></h1><p>Study the landscape. Use the satellite view, then place your best guess on the world map.</p></section>
+<section class="game-stage" id="stage"><div id="satellite" class="satellite-map"></div>
+<div id="guessPanel" class="guess-panel"><div class="guess-map-header"><div><div class="eyebrow">GUESS MAP</div><div class="guess-status" id="guessStatus">PLACE YOUR GUESS</div></div><button class="map-toggle" id="toggleMap">EXPAND MAP ↗</button></div><div id="guessMap" class="guess-map"></div><div class="guess-attribution"><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a></div><button class="submit map-submit disabled" id="submit" disabled>LOCK IN GUESS <span>→</span></button></div>
+<div class="bottom-left"><div class="tip"><span>01</span><b>STUDY THE LANDSCAPE</b></div><div class="tip"><span>02</span><b>DROP YOUR PIN ON THE GUESS MAP</b></div></div>
+<div id="result"></div></section></main>`;
+document.getElementById("toggleMap").onclick=()=>{expanded=!expanded;document.getElementById("guessPanel").classList.toggle("expanded",expanded);document.getElementById("toggleMap").textContent=expanded?"MINIMIZE MAP ↙":"EXPAND MAP ↗";setTimeout(()=>guessMap.invalidateSize(),280)};
+document.getElementById("submit").onclick=submitGuess;
 }
 
-let satTileErrors=0;
-let satTileErrorEl=null;
-let satLastMouseLatLng=null;
-
+let satTileErrors=0,satTileErrorEl=null,satLastMouseLatLng=null;
 const CursorZoomControl=L.Control.extend({
-  options:{position:"topleft"},
-
-  onAdd:function(map){
-    const container=L.DomUtil.create(
-      "div",
-      "leaflet-control-zoom leaflet-bar leaflet-control"
-    );
-
-    const zoomInBtn=L.DomUtil.create(
-      "a",
-      "leaflet-control-zoom-in",
-      container
-    );
-
-    zoomInBtn.href="#";
-    zoomInBtn.title="Zoom in";
-    zoomInBtn.innerHTML="+";
-    zoomInBtn.setAttribute("role","button");
-
-    const zoomOutBtn=L.DomUtil.create(
-      "a",
-      "leaflet-control-zoom-out",
-      container
-    );
-
-    zoomOutBtn.href="#";
-    zoomOutBtn.title="Zoom out";
-    zoomOutBtn.innerHTML="&#8722;";
-    zoomOutBtn.setAttribute("role","button");
-
-    const doZoom=delta=>{
-      if(map._loaded===false)return;
-
-      const target=satLastMouseLatLng||map.getCenter();
-      const newZoom=map._limitZoom(map.getZoom()+delta);
-
-      map.setZoomAround(target,newZoom);
-    };
-
-    L.DomEvent
-      .on(zoomInBtn,"click",L.DomEvent.stop)
-      .on(zoomInBtn,"click",()=>doZoom(1));
-
-    L.DomEvent
-      .on(zoomOutBtn,"click",L.DomEvent.stop)
-      .on(zoomOutBtn,"click",()=>doZoom(-1));
-
-    const updateState=()=>{
-      zoomInBtn.classList.toggle(
-        "leaflet-disabled",
-        map.getZoom()>=map.getMaxZoom()
-      );
-
-      zoomOutBtn.classList.toggle(
-        "leaflet-disabled",
-        map.getZoom()<=map.getMinZoom()
-      );
-    };
-
-    map.on("zoomend zoomlevelschange",updateState);
-    updateState();
-
-    return container;
-  }
+options:{position:"topleft"},
+onAdd:function(map){
+const container=L.DomUtil.create("div","leaflet-control-zoom leaflet-bar leaflet-control");
+const zoomInBtn=L.DomUtil.create("a","leaflet-control-zoom-in",container);
+zoomInBtn.href="#";zoomInBtn.title="Zoom in";zoomInBtn.innerHTML="+";zoomInBtn.setAttribute("role","button");
+const zoomOutBtn=L.DomUtil.create("a","leaflet-control-zoom-out",container);
+zoomOutBtn.href="#";zoomOutBtn.title="Zoom out";zoomOutBtn.innerHTML="&#8722;";zoomOutBtn.setAttribute("role","button");
+const doZoom=delta=>{
+if(map._loaded===false)return;
+const target=satLastMouseLatLng||map.getCenter();
+const newZoom=map._limitZoom(map.getZoom()+delta);
+map.setZoomAround(target,newZoom);
+};
+L.DomEvent.on(zoomInBtn,"click",L.DomEvent.stop).on(zoomInBtn,"click",()=>doZoom(1));
+L.DomEvent.on(zoomOutBtn,"click",L.DomEvent.stop).on(zoomOutBtn,"click",()=>doZoom(-1));
+const updateState=()=>{
+zoomInBtn.classList.toggle("leaflet-disabled",map.getZoom()>=map.getMaxZoom());
+zoomOutBtn.classList.toggle("leaflet-disabled",map.getZoom()<=map.getMinZoom());
+};
+map.on("zoomend zoomlevelschange",updateState);
+updateState();
+return container;
+}
 });
-
 function setupSatellite(){
-  satMap=L.map("satellite",{
-    zoomControl:false,
-    attributionControl:true,
-    worldCopyJump:false,
-    zoomSnap:1,
-    dragging:true
-  });
-
-  new CursorZoomControl().addTo(satMap);
-
-  satMap.on("mousemove",e=>{
-    const target=e.originalEvent&&e.originalEvent.target;
-
-    if(target&&target.closest&&target.closest(".leaflet-control")){
-      return;
-    }
-
-    satLastMouseLatLng=e.latlng;
-  });
-
-  satMap.on("mouseout",e=>{
-    const related=e.originalEvent&&e.originalEvent.relatedTarget;
-
-    if(related&&satMap.getContainer().contains(related)){
-      return;
-    }
-
-    satLastMouseLatLng=null;
-  });
-
-  const satTiles=L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom:19,
-      attribution:"© Esri, Maxar, Earthstar Geographics"
-    }
-  ).addTo(satMap);
-
-  satTiles.on("tileerror",()=>{
-    satTileErrors++;
-
-    if(satTileErrors>=6&&!satTileErrorEl){
-      satTileErrorEl=document.createElement("div");
-
-      satTileErrorEl.style.cssText=
-        "position:absolute;z-index:1300;left:18px;top:18px;right:18px;" +
-        "background:rgba(120,20,15,.92);color:#f5ede9;padding:14px 18px;" +
-        "font-size:12px;letter-spacing:.04em;border:1px solid rgba(255,255,255,.25);";
-
-      satTileErrorEl.textContent=
-        "Satellite imagery isn't loading — check your internet connection or try refreshing.";
-
-      document.getElementById("stage").appendChild(satTileErrorEl);
-    }
-  });
-
-  satTiles.on("tileload",()=>{
-    if(satTileErrorEl){
-      satTileErrorEl.remove();
-      satTileErrorEl=null;
-    }
-
-    satTileErrors=0;
-  });
+satMap=L.map("satellite",{zoomControl:false,attributionControl:true,worldCopyJump:false,zoomSnap:1,dragging:true});
+new CursorZoomControl().addTo(satMap);
+satMap.on("mousemove",e=>{
+const t=e.originalEvent&&e.originalEvent.target;
+if(t&&t.closest&&t.closest(".leaflet-control"))return;
+satLastMouseLatLng=e.latlng;
+});
+satMap.on("mouseout",e=>{
+const to=e.originalEvent&&e.originalEvent.relatedTarget;
+if(to&&satMap.getContainer().contains(to))return;
+satLastMouseLatLng=null;
+});
+const satTiles=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"© Esri, Maxar, Earthstar Geographics"}).addTo(satMap);
+satTiles.on("tileerror",()=>{
+satTileErrors++;
+if(satTileErrors>=6&&!satTileErrorEl){
+satTileErrorEl=document.createElement("div");
+satTileErrorEl.style.cssText="position:absolute;z-index:1300;left:18px;top:18px;right:18px;background:rgba(120,20,15,.92);color:#f5ede9;padding:14px 18px;font-size:12px;letter-spacing:.04em;border:1px solid rgba(255,255,255,.25);";
+satTileErrorEl.textContent="Satellite imagery isn't loading — check your internet connection or try refreshing.";
+document.getElementById("stage").appendChild(satTileErrorEl);
 }
-
+});
+satTiles.on("tileload",()=>{
+if(satTileErrorEl){satTileErrorEl.remove();satTileErrorEl=null}
+satTileErrors=0;
+});
+}
 function setupGuessMap(){
-  guessMap=L.map("guessMap",{
-    zoomControl:true,
-    attributionControl:true,
-    worldCopyJump:true,
-    minZoom:2,
-    maxZoom:19
-  }).setView([20,0],2);
-
-  L.maplibreGL({
-    style:"https://tiles.openfreemap.org/styles/positron"
-  }).addTo(guessMap);
-
-  guessMap.on("click",e=>{
-    if(!submitted){
-      setGuess([e.latlng.lat,e.latlng.lng]);
-    }
-  });
+guessMap=L.map("guessMap",{zoomControl:true,attributionControl:true,worldCopyJump:true,minZoom:2,maxZoom:19}).setView([20,0],2);
+L.maplibreGL({style:"https://tiles.openfreemap.org/styles/positron"}).addTo(guessMap);
+guessMap.on("click",e=>{if(!submitted){setGuess([e.latlng.lat,e.latlng.lng]);}});
 }
-
 let resizeTimer=null;
-
 window.addEventListener("resize",()=>{
-  clearTimeout(resizeTimer);
-
-  resizeTimer=setTimeout(()=>{
-    if(satMap){
-      satMap.invalidateSize();
-
-      if(satBounds){
-        fitSatelliteToBounds(satLocBounds);
-      }
-    }
-
-    if(guessMap){
-      guessMap.invalidateSize();
-    }
-  },200);
+clearTimeout(resizeTimer);
+resizeTimer=setTimeout(()=>{
+if(satMap){
+satMap.invalidateSize();
+if(satBounds)fitSatelliteToBounds(satLocBounds);
+}
+if(guessMap)guessMap.invalidateSize();
+},200);
 });
 
 function renderRound(){
-  const loc=game[round];
-
-  guess=null;
-  submitted=false;
-  expanded=false;
-
-  document.getElementById("roundText").textContent=
-    `ROUND ${String(round+1).padStart(2,"0")} / 06`;
-
-  document.getElementById("scoreText").textContent=
-    score.toLocaleString();
-
-  document.getElementById("category").textContent=loc.category;
-  document.getElementById("clue").textContent=loc.clue;
-  document.getElementById("guessStatus").textContent="PLACE YOUR GUESS";
-
-  document.getElementById("guessPanel").classList.remove("expanded");
-  document.getElementById("toggleMap").textContent="EXPAND MAP ↗";
-  document.getElementById("result").innerHTML="";
-
-  const submit=document.getElementById("submit");
-
-  submit.disabled=true;
-  submit.classList.add("disabled");
-  submit.innerHTML='LOCK IN GUESS <span>→</span>';
-
-  satMap.eachLayer(layer=>{
-    if(layer instanceof L.Marker||layer instanceof L.Polyline){
-      layer.remove();
-    }
-  });
-
-  satMap.invalidateSize();
-  fitSatelliteToBounds(loc.bounds);
-
-  guessMap.setView([20,0],2);
-
-  if(guessMarker){
-    guessMarker.remove();
-    guessMarker=null;
-  }
-
-  if(answerMarker){
-    answerMarker.remove();
-    answerMarker=null;
-  }
-
-  if(line1){
-    line1.remove();
-    line1=null;
-  }
-
-  if(line2){
-    line2.remove();
-    line2=null;
-  }
+const loc=game[round];guess=null;submitted=false;expanded=false;
+clearInterval(timerId);secondsLeft=ROUND_SECONDS;
+document.getElementById("roundText").textContent=`${activeMode.name} · ROUND ${String(round+1).padStart(2,"0")} / 06`;
+document.getElementById("timerText").textContent=secondsLeft;
+timerId=setInterval(()=>{secondsLeft=Math.max(0,secondsLeft-1);const el=document.getElementById("timerText");if(el)el.textContent=secondsLeft;if(secondsLeft===0)clearInterval(timerId)},1000);
+document.getElementById("scoreText").textContent=score.toLocaleString();
+document.getElementById("category").textContent=loc.category;
+document.getElementById("clue").textContent=loc.clue;
+document.getElementById("guessStatus").textContent="PLACE YOUR GUESS";
+document.getElementById("guessPanel").classList.remove("expanded");
+document.getElementById("toggleMap").textContent="EXPAND MAP ↗";
+document.getElementById("result").innerHTML="";
+document.getElementById("submit").disabled=true;document.getElementById("submit").classList.add("disabled");
+satMap.eachLayer(l=>{if(l instanceof L.Marker||l instanceof L.Polyline){l.remove()}});
+satMap.invalidateSize();
+fitSatelliteToBounds(loc.bounds);
+guessMap.setView([20,0],2);
+if(guessMarker){guessMarker.remove();guessMarker=null}if(answerMarker){answerMarker.remove();answerMarker=null}if(line1){line1.remove();line1=null}if(line2){line2.remove();line2=null}
 }
-
 function fitSatelliteToBounds(bounds){
-  satMap.setMaxBounds(null);
-  satMap.setMinZoom(0);
-  satMap.setMaxZoom(17);
-
-  satMap.fitBounds(bounds,{padding:[10,10]});
-
-  const initialZoom=satMap.getZoom();
-
-  satMap.setMinZoom(initialZoom);
-
-  const visibleBounds=satMap.getBounds().pad(0.15);
-
-  satMap.setMaxBounds(visibleBounds);
-  satMap.options.maxBoundsViscosity=1;
-
-  satMap.setView(satMap.getCenter(),initialZoom);
-
-  satBounds=visibleBounds;
-  satLocBounds=bounds;
+satMap.setMaxBounds(null);
+satMap.setMinZoom(0);
+satMap.setMaxZoom(17);
+satMap.fitBounds(bounds,{padding:[10,10]});
+const initialZoom=satMap.getZoom();
+satMap.setMinZoom(initialZoom);
+const visibleBounds=satMap.getBounds().pad(0.15);
+satMap.setMaxBounds(visibleBounds);
+satMap.options.maxBoundsViscosity=1;
+satMap.setView(satMap.getCenter(),initialZoom);
+satBounds=visibleBounds;
+satLocBounds=bounds;
 }
 
-function setGuess(selectedGuess){
-  guess=selectedGuess;
-
-  if(guessMarker){
-    guessMarker.remove();
-  }
-
-  guessMarker=L.marker(guess,{
-    icon:icon("guess","YOU")
-  }).addTo(guessMap);
-
-  document.getElementById("guessStatus").textContent="PIN PLACED";
-
-  const submit=document.getElementById("submit");
-
-  submit.disabled=false;
-  submit.classList.remove("disabled");
+function setGuess(g){
+guess=g;
+if(guessMarker)guessMarker.remove();
+guessMarker=L.marker(g,{icon:icon("guess","YOU")}).addTo(guessMap);
+document.getElementById("guessStatus").textContent="PIN PLACED";
+document.getElementById("submit").disabled=false;document.getElementById("submit").classList.remove("disabled");
 }
-
 function submitGuess(){
-  if(!guess||submitted){
-    return;
-  }
-
-  submitted=true;
-
-  const loc=game[round];
-  const km=dist(guess,loc.coords);
-  const points=scoreFor(km);
-
-  score+=points;
-
-  document.getElementById("scoreText").textContent=
-    score.toLocaleString();
-
-  document.getElementById("guessStatus").textContent="RESULT";
-
-  const submit=document.getElementById("submit");
-
-  submit.disabled=true;
-  submit.textContent="GUESS LOCKED";
-
-  if(answerMarker){
-    answerMarker.remove();
-  }
-
-  answerMarker=L.marker(loc.coords,{
-    icon:icon("actual","ANSWER")
-  }).addTo(guessMap);
-
-  if(line1)line1.remove();
-  if(line2)line2.remove();
-
-  line1=L.polyline(
-    [guess,loc.coords],
-    {
-      color:"#0a0f0c",
-      weight:10,
-      opacity:.95
-    }
-  ).addTo(guessMap);
-
-  line2=L.polyline(
-    [guess,loc.coords],
-    {
-      color:"#f5c542",
-      weight:5,
-      opacity:1,
-      dashArray:"10 8"
-    }
-  ).addTo(guessMap);
-
-  const group=L.latLngBounds([guess,loc.coords]);
-
-  guessMap.fitBounds(group,{
-    padding:[90,90],
-    maxZoom:5
-  });
-
-  expanded=true;
-
-  document
-    .getElementById("guessPanel")
-    .classList.add("expanded");
-
-  document.getElementById("toggleMap").textContent="MINIMIZE MAP ↙";
-
-  setTimeout(()=>guessMap.invalidateSize(),300);
-
-  document.getElementById("result").innerHTML=`
-    <div class="result-card">
-      <div class="eyebrow">FIELD NOTE · ${esc(loc.category)}</div>
-
-      <h2>${esc(loc.name)}</h2>
-
-      <div class="result-stats">
-        <div>
-          <span>DISTANCE</span>
-          <strong>${Math.round(km).toLocaleString()} km</strong>
-        </div>
-
-        <div>
-          <span>ROUND SCORE</span>
-          <strong>+${points.toLocaleString()}</strong>
-        </div>
-      </div>
-
-      <p>${esc(loc.story)}</p>
-
-      <div class="hint-line">
-        <b>What to notice:</b> ${esc(loc.hint)}
-      </div>
-
-      ${
-        round<5
-          ? '<button class="primary" id="nextBtn">NEXT LANDSCAPE →</button>'
-          : '<div class="final-note">Final round complete. Your expedition score is shown next.</div>'
-      }
-    </div>
-  `;
-
-  if(round<5){
-    document.getElementById("nextBtn").onclick=nextRound;
-  }else{
-    setTimeout(showFinal,900);
-  }
+if(!guess||submitted)return;
+submitted=true;clearInterval(timerId);const loc=game[round],km=dist(guess,loc.coords),basePts=scoreFor(km),speedFactor=.5+.5*(secondsLeft/ROUND_SECONDS),pts=Math.round(basePts*speedFactor);score+=pts;
+document.getElementById("scoreText").textContent=score.toLocaleString();document.getElementById("guessStatus").textContent="RESULT";
+document.getElementById("submit").disabled=true;document.getElementById("submit").textContent="GUESS LOCKED";
+if(answerMarker)answerMarker.remove();answerMarker=L.marker(loc.coords,{icon:icon("actual","ANSWER")}).addTo(guessMap);
+if(line1)line1.remove();if(line2)line2.remove();
+line1=L.polyline([guess,loc.coords],{color:"#0a0f0c",weight:10,opacity:.95}).addTo(guessMap);
+line2=L.polyline([guess,loc.coords],{color:"#f5c542",weight:5,opacity:1,dashArray:"10 8"}).addTo(guessMap);
+const group=L.latLngBounds([guess,loc.coords]);guessMap.fitBounds(group,{padding:[90,90],maxZoom:5});
+expanded=true;document.getElementById("guessPanel").classList.add("expanded");document.getElementById("toggleMap").textContent="MINIMIZE MAP ↙";
+setTimeout(()=>guessMap.invalidateSize(),300);
+document.getElementById("result").innerHTML=`<div class="result-card"><div class="eyebrow">FIELD NOTE · ${esc(loc.category)}</div><h2>${esc(loc.name)}</h2><div class="result-stats"><div><span>DISTANCE</span><strong>${Math.round(km).toLocaleString()} km</strong></div><div><span>TIME</span><strong>${secondsLeft}s left</strong></div><div><span>ROUND SCORE</span><strong>+${pts.toLocaleString()}</strong></div></div><p>${esc(loc.story)}</p><div class="hint-line"><b>What to notice:</b> ${esc(loc.hint)}</div>${round<5?'<button class="primary" id="nextBtn">NEXT ROUND →</button>':'<div class="final-note">Final round complete. Your expedition score is shown next.</div>'}</div>`;
+if(round<5)document.getElementById("nextBtn").onclick=nextRound;else setTimeout(showFinal,900);
 }
-
-function nextRound(){
-  round++;
-  renderRound();
-}
-
+function nextRound(){round++;renderRound();}
 function showFinal(){
-  const total=score;
-  const list=safeLeaderboard();
-
-  if(window.goatcounter&&window.goatcounter.count){
-    window.goatcounter.count({
-      path:"game-completed",
-      title:"Game completed",
-      event:true
-    });
-  }
-
-  document.getElementById("app").innerHTML=`
-    <div class="end-screen">
-      <div class="end-inner">
-        <div class="eyebrow">EXPEDITION COMPLETE</div>
-
-        <h1>
-          ${total.toLocaleString()}
-          <span>/ 30,000</span>
-        </h1>
-
-        <p>Six landscapes. One score. You read the terrain.</p>
-
-        <div class="name-row">
-          <input id="nameInput" maxlength="18" placeholder="ENTER YOUR NAME">
-          <button id="saveBtn">SAVE SCORE</button>
-        </div>
-
-        <div class="leaderboard">
-          <div class="eyebrow">LOCAL LEADERBOARD</div>
-          <div id="rows"></div>
-        </div>
-
-        <button class="primary" id="againBtn">PLAY AGAIN →</button>
-      </div>
-    </div>
-  `;
-
-  const drawRows=entries=>{
-    document.getElementById("rows").innerHTML=
-      entries.slice(0,10).map((entry,index)=>`
-        <div class="leader-row">
-          <span>
-            ${String(index+1).padStart(2,"0")}
-            ${esc(entry.name)}
-          </span>
-
-          <strong>${Number(entry.score).toLocaleString()}</strong>
-        </div>
-      `).join("");
-  };
-
-  drawRows(list);
-
-  document.getElementById("saveBtn").onclick=()=>{
-    const updated=saveLeaderboard(
-      document.getElementById("nameInput").value,
-      total
-    );
-
-    drawRows(updated);
-  };
-
-  document.getElementById("againBtn").onclick=()=>{
-    game=pickGame();
-    round=0;
-    score=0;
-    guess=null;
-    submitted=false;
-    satMap=null;
-    guessMap=null;
-
-    document.getElementById("app").innerHTML="";
-
-    init();
-  };
+const total=score,list=safeLeaderboard();
+if(window.goatcounter&&window.goatcounter.count){
+window.goatcounter.count({path:"game-completed",title:"Game completed",event:true});
 }
-
+document.getElementById("app").innerHTML=`<div class="end-screen"><div class="end-inner"><div class="eyebrow">${activeMode.name} COMPLETE</div><h1>${total.toLocaleString()} <span>/ 30,000</span></h1><p>Six rounds. Accuracy and speed both shaped your score.</p><div class="name-row"><input id="nameInput" maxlength="18" placeholder="ENTER YOUR NAME"><button id="saveBtn">SAVE SCORE</button></div><div class="leaderboard"><div class="eyebrow">LOCAL LEADERBOARD</div><div id="rows"></div></div><button class="primary" id="againBtn">PLAY AGAIN →</button> <button class="primary" id="menuBtn">CHOOSE MODE</button></div></div>`;
+const drawRows=arr=>document.getElementById("rows").innerHTML=arr.slice(0,10).map((e,i)=>`<div class="leader-row"><span>${String(i+1).padStart(2,"0")} ${esc(e.name)}</span><strong>${Number(e.score).toLocaleString()}</strong></div>`).join("");
+drawRows(list);
+document.getElementById("saveBtn").onclick=()=>{const updated=saveLeaderboard(document.getElementById("nameInput").value,total);drawRows(updated)};
+document.getElementById("againBtn").onclick=()=>startMode(activeMode.id);
+document.getElementById("menuBtn").onclick=()=>{clearInterval(timerId);activeMode=null;renderMenu()};
+}
 init();
 </script>
-</body>
-</html>
+</body></html>
